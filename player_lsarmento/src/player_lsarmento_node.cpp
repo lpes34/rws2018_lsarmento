@@ -1,7 +1,7 @@
 #include <ros/ros.h>
+#include <rws2018_libs/team.h>
 #include <iostream>
 #include <vector>
-
 // Boost includes
 #include <boost/shared_ptr.hpp>
 
@@ -63,13 +63,13 @@ private:
   std::string team;
 };
 
-class Team
-{
-public:
-  Team(string name)
-  {
-  }
-};
+// class Team
+// {
+// public:
+//   Team(string name)
+//   {
+//   }
+// };
 
 class MyPlayer : public Player
 {
@@ -102,10 +102,15 @@ int main(int argc, char **argv)
   // my_player.printReport();
   ros::NodeHandle n;
 
-  string test_param_value;
-  n.getParam("test_param", test_param_value);
+  if (my_player.red_team->playerBelongsToTeam("amartins"))
+  {
+    cout << "a joana esta na equipa certa" << endl;
+  };
 
-  cout << "read test _param with value " << test_param_value << endl;
+  // string test_param_value;
+  // n.getParam("test_param", test_param_value);
+
+  // cout << "read test _param with value " << test_param_value << endl;
 
   ros::spin();
 }
