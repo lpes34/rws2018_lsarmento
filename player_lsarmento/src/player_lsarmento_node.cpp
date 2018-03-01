@@ -1,9 +1,17 @@
+#include <ros/ros.h>
 #include <iostream>
+#include <vector>
 
+// Boost includes
+#include <boost/shared_ptr.hpp>
+
+using namespace std;
+namespace rws_lsarmento
+{
 class Player  // equivalente ao struct em C
 {
 public:
-  Player(std::string argin_name)
+  Player(string argin_name)
   {
     name = argin_name;
   }
@@ -55,25 +63,49 @@ private:
   std::string team;
 };
 
-class MyPlayer : public Player
+class Team
 {
 public:
-  MyPlayer(std::string argin_name, std::string argin_team) : Player(argin_name)
+  Team(string name)
   {
-    setTeamName(argin_team);
   }
 };
 
-int main()
+class MyPlayer : public Player
 {
-  std::string player_name = "lsarmento";
-  // Creating an instance of class Player
-  Player player(player_name);
-  player.setTeamName(1);
+public:
+  boost::shared_ptr<Team> red_team;
+  boost::shared_ptr<Team> green_team;
+  boost::shared_ptr<Team> blue_team;
 
-  std::cout << "Created an instance of class player with public name " << player.name << std::endl;
-  std::cout << "Created an instance of class player with public team name " << player.getTeamName() << std::endl;
+  MyPlayer(std::string argin_name, std::string argin_team) : Player(argin_name)
+  {
+    red_team = boost::shared_ptr<Team>(new Team("red"));
+    green_team = boost::shared_ptr<Team>(new Team("green"));
+    blue_team = boost::shared_ptr<Team>(new Team("blue"));
+    setTeamName(argin_team);
+  }
+  void printReport()
+  {
+    cout << "My name is " << name << "and my team name is " << getTeamName() << endl;
+  }
+};
+}
 
-  MyPlayer my_player("lsarmento", "green");
-  std::cout << "Created an instance of class player with public name " << player.name << std::endl;
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, "lsarmento");
+
+  rws_lsarmento::MyPlayer my_player("lsarmento", "green");
+  // std::cout << "Created an instance of class player with public name " << my_player.name << std::endl;
+  // std::cout << "Created an instance of class player with team name " << my_player.getTeamName() << std::endl;
+  // my_player.printReport();
+  ros::NodeHandle n;
+
+  string test_param_value;
+  n.getParam("test_param", test_param_value);
+
+  cout << "read test _param with value " << test_param_value << endl;
+
+  ros::spin();
 }

@@ -10,6 +10,7 @@
         "cstdlib": "cpp",
         "cstring": "cpp",
         "cwchar": "cpp",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "typeinfo": "cpp"
     }
 }
