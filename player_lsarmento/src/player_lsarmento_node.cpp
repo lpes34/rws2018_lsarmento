@@ -2,6 +2,8 @@
 #include <rws2018_libs/team.h>
 #include <iostream>
 #include <vector>
+
+#include <tf/transform_broadcaster.h>
 // Boost includes
 #include <boost/shared_ptr.hpp>
 
@@ -77,6 +79,7 @@ public:
   boost::shared_ptr<Team> red_team;
   boost::shared_ptr<Team> green_team;
   boost::shared_ptr<Team> blue_team;
+  tf::TransformBroadcaster br;  // declare broadcaster
 
   MyPlayer(std::string argin_name, std::string argin_team) : Player(argin_name)
   {
@@ -88,6 +91,16 @@ public:
   void printReport()
   {
     cout << "My name is " << name << "and my team name is " << getTeamName() << endl;
+  }
+
+  void move(void)
+  {
+    tf::Transform transform;  //
+    transform.setOrigin(tf::Vector3(3, 4, 0.0));
+    tf::Quaternion q;
+    q.setRPY(0, 0, 0.5);
+    transform.setRotation(q);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "lsarmento"));
   }
 };
 }
@@ -102,15 +115,18 @@ int main(int argc, char **argv)
   // my_player.printReport();
   ros::NodeHandle n;
 
-  if (my_player.red_team->playerBelongsToTeam("amartins"))
-  {
-    cout << "a joana esta na equipa certa" << endl;
-  };
-
   // string test_param_value;
   // n.getParam("test_param", test_param_value);
 
   // cout << "read test _param with value " << test_param_value << endl;
 
+  ros::Rate loop_rate(10);
+  while (ros::ok())
+  {
+    my_player.move();
+
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
   ros::spin();
 }
