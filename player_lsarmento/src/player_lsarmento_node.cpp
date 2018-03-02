@@ -154,8 +154,26 @@ public:
     }
     return atan2(t.getOrigin().y(), t.getOrigin().x());
   }
+  double getDistanceToPlayer(string other_player,
+                             double time_to_wait = DEFAULT_TIME) {
+    StampedTransform t; // The transform object
+    // Time now = Time::now(); //get the time
+    Time now = Time(0); // get the latest transform received
 
-  void marker(void) {
+    try {
+      listener.waitForTransform("lsarmento", other_player, now,
+                                Duration(time_to_wait));
+      listener.lookupTransform("lsarmento", other_player, now, t);
+    } catch (TransformException &ex) {
+      ROS_ERROR("%s", ex.what());
+      return NAN;
+    }
+
+    return sqrt(t.getOrigin().y() * t.getOrigin().y() +
+                t.getOrigin().x() * t.getOrigin().x());
+  }
+
+  void marker(string player_to_hunt) {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "lsarmento";
     marker.header.stamp = ros::Time();
@@ -168,16 +186,16 @@ public:
 
     marker.scale.z = 0.5;
     marker.color.a = 1.0; // Don't forget to set the alpha!
-    marker.color.r = 0.0;
-    marker.color.g = 1.0;
+    marker.color.r = 1.0;
+    marker.color.g = 0.0;
     marker.color.b = 0.0;
-    marker.text = "hello, i'm alive";
+    marker.text = "You are going to die " + player_to_hunt + "!!!";
     marker.lifetime = ros::Duration(3);
     vis_pub->publish(marker);
   }
 
   void move(const rws2018_msgs::MakeAPlay::ConstPtr &msg) {
-    marker();
+
     double x = T.getOrigin().x();
     double y = T.getOrigin().y();
     double a = 0;
@@ -185,12 +203,23 @@ public:
     // ......................................
     // .............AI
     // ......................................
+    // Finding nearest prey
+    double min_distance = 99999;
+    string player_to_hunt = "no player";
+    for (size_t i = 0; i < my_preys->player_names.size(); i++) {
+      double dist = getDistanceToPlayer(my_preys->player_names[i]);
+      if (isnan(dist)) {
+      } else if (dist < min_distance) {
+        min_distance = dist;
+        player_to_hunt = my_preys->player_names[i];
+      }
+    }
 
     double displacement = 6;
-    double delta_alpha = getAngleToPlayer("blourenco");
+    double delta_alpha = getAngleToPlayer(player_to_hunt);
     if (isnan(delta_alpha))
       delta_alpha = 0;
-
+    marker(player_to_hunt);
     // ......................................
     // .............CONSTRAINS PART
     // ......................................
