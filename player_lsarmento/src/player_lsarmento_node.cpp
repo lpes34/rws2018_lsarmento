@@ -2,6 +2,7 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <rws2018_libs/team.h>
+#include <rws2018_msgs/MakeAPlay.h>
 #include <vector>
 
 #include <tf/transform_broadcaster.h>
@@ -69,6 +70,9 @@ public:
 
   tf::TransformBroadcaster br; // declare broadcaster
 
+  ros::NodeHandle n;
+  boost::shared_ptr<ros::Subscriber> sub;
+
   MyPlayer(std::string argin_name, std::string argin_team)
       : Player(argin_name) {
     red_team = boost::shared_ptr<Team>(new Team("red"));
@@ -90,16 +94,19 @@ public:
       my_hunters = green_team;
       setTeamName("blue");
     }
+    sub = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
+    *sub = n.subscribe("/make_a_play", 100, &MyPlayer::move, this);
   }
   void printReport() {
     ROS_INFO("My name is %s and my team is %s", name.c_str(),
              getTeamName().c_str());
   }
 
-  void move(float loop) {
+  void move(const rws2018_msgs::MakeAPlay::ConstPtr &msg) {
+    static float loop = 0;
     tf::Transform transform; //
     transform.setOrigin(
-        tf::Vector3(3 * sin(loop / 20), 4 * cos(loop / 20), 0.0));
+        tf::Vector3(3 * sin(loop++ / 20), 4 * cos(loop++ / 20), 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, -loop / 6);
     transform.setRotation(q);
@@ -114,7 +121,7 @@ public:
 int main(int argc, char **argv) {
   ros::init(argc, argv, "lsarmento");
 
-  rws_lsarmento::MyPlayer my_player("lsarmento", "green");
+  rws_lsarmento::MyPlayer my_player("lsarmento", "red");
   // std::cout << "Created an instance of class player with public name " <<
   // my_player.name << std::endl;
   // std::cout << "Created an instance of class player with team name " <<
@@ -127,13 +134,14 @@ int main(int argc, char **argv) {
 
   // cout << "read test _param with value " << test_param_value << endl;
   my_player.printReport();
-  ros::Rate loop_rate(10);
-  float loop;
-  while (ros::ok()) {
-    my_player.move(loop++);
 
-    ros::spinOnce();
-    loop_rate.sleep();
-  }
+  // ros::Rate loop_rate(10);
+  // float loop;
+  // while (ros::ok()) {
+  //   my_player.move(loop++);
+
+  //   ros::spinOnce();
+  //   loop_rate.sleep();
+  // }
   ros::spin();
 }
