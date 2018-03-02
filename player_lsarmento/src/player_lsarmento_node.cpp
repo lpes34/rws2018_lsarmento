@@ -173,7 +173,7 @@ public:
                 t.getOrigin().x() * t.getOrigin().x());
   }
 
-  void marker(string player_to_hunt) {
+  void marker(string player_to_hunt, int person) {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "lsarmento";
     marker.header.stamp = ros::Time();
@@ -189,7 +189,11 @@ public:
     marker.color.r = 1.0;
     marker.color.g = 0.0;
     marker.color.b = 0.0;
-    marker.text = "You are going to die " + player_to_hunt + "!!!";
+    if (person == 1) {
+      marker.text = "You are going to die " + player_to_hunt + "!!!";
+    } else
+      marker.text = "Go away " + player_to_hunt + " :(";
+
     marker.lifetime = ros::Duration(3);
     vis_pub->publish(marker);
   }
@@ -214,12 +218,31 @@ public:
         player_to_hunt = my_preys->player_names[i];
       }
     }
-
+    // finding nearest hunter
+    double min_distance2 = 99999;
+    string player_to_flee = "no player";
+    for (size_t i = 0; i < my_hunters->player_names.size(); i++) {
+      double dist = getDistanceToPlayer(my_hunters->player_names[i]);
+      if (isnan(dist)) {
+      } else if (dist < min_distance2) {
+        min_distance2 = dist;
+        player_to_flee = my_hunters->player_names[i];
+      }
+    }
+    double delta_alpha = 0;
     double displacement = 6;
-    double delta_alpha = getAngleToPlayer(player_to_hunt);
-    if (isnan(delta_alpha))
-      delta_alpha = 0;
-    marker(player_to_hunt);
+    if (min_distance < min_distance2) {
+
+      delta_alpha = getAngleToPlayer(player_to_hunt);
+      if (isnan(delta_alpha))
+        delta_alpha = 0;
+      marker(player_to_hunt, 1);
+    } else {
+      delta_alpha = -getAngleToPlayer(player_to_flee);
+      if (isnan(delta_alpha))
+        delta_alpha = 0;
+      marker(player_to_flee, 2);
+    }
     // ......................................
     // .............CONSTRAINS PART
     // ......................................
