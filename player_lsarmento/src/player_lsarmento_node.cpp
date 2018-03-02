@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 #include <ros/ros.h>
 #include <rws2018_libs/team.h>
@@ -95,14 +96,17 @@ public:
              getTeamName().c_str());
   }
 
-  void move(void) {
+  void move(int loop) {
     tf::Transform transform; //
-    transform.setOrigin(tf::Vector3(3, 4, 0.0));
+    transform.setOrigin(
+        tf::Vector3(3 * sin(loop / 20), 4 * cos(loop / 20), 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, 0.5);
     transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world",
                                           "lsarmento"));
+
+    ROS_INFO("My name is %s i like to move it move it", name.c_str());
   }
 };
 }
@@ -124,8 +128,9 @@ int main(int argc, char **argv) {
   // cout << "read test _param with value " << test_param_value << endl;
   my_player.printReport();
   ros::Rate loop_rate(10);
+  int loop;
   while (ros::ok()) {
-    my_player.move();
+    my_player.move(loop++);
 
     ros::spinOnce();
     loop_rate.sleep();
