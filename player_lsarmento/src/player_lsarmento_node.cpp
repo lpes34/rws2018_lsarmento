@@ -8,9 +8,14 @@
 #include <visualization_msgs/Marker.h>
 
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 // Boost includes
 #include <boost/shared_ptr.hpp>
 
+#define DEFAULT_TIME 0.05
+
+using namespace ros;
+using namespace tf;
 using namespace std;
 namespace rws_lsarmento {
 class Player // equivalente ao struct em C
@@ -75,7 +80,9 @@ public:
   ros::NodeHandle n;
   boost::shared_ptr<ros::Subscriber> sub;
   tf::Transform T; // declare the transformation object (player's pose wrt
-                   // world)
+  // world)
+
+  tf::TransformListener listener;
 
   boost::shared_ptr<ros::Publisher> vis_pub;
 
@@ -133,6 +140,21 @@ public:
              getTeamName().c_str());
   }
 
+  double getAngleToPlayer(string other_player,
+                          double time_to_wait = DEFAULT_TIME) {
+    StampedTransform t;
+    Time now = Time(0);
+    try {
+      listener.waitForTransform("lsarmento", other_player, now,
+                                Duration(time_to_wait));
+      listener.lookupTransform("lsarmento", other_player, now, t);
+    } catch (TransformException &ex) {
+      ROS_ERROR("%s", ex.what());
+      return NAN;
+    }
+    return atan2(t.getOrigin().y(), t.getOrigin().x());
+  }
+
   void marker(void) {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "lsarmento";
@@ -163,8 +185,12 @@ public:
     // ......................................
     // .............AI
     // ......................................
+
     double displacement = 6;
-    double delta_alpha = M_PI;
+    double delta_alpha = getAngleToPlayer("blourenco");
+    if (isnan(delta_alpha))
+      delta_alpha = 0;
+
     // ......................................
     // .............CONSTRAINS PART
     // ......................................
