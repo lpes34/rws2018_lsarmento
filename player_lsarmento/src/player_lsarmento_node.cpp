@@ -96,12 +96,12 @@ public:
              getTeamName().c_str());
   }
 
-  void move(int loop) {
+  void move(float loop) {
     tf::Transform transform; //
     transform.setOrigin(
         tf::Vector3(3 * sin(loop / 20), 4 * cos(loop / 20), 0.0));
     tf::Quaternion q;
-    q.setRPY(0, 0, 0.5);
+    q.setRPY(0, 0, -loop / 6);
     transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world",
                                           "lsarmento"));
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
   // cout << "read test _param with value " << test_param_value << endl;
   my_player.printReport();
   ros::Rate loop_rate(10);
-  int loop;
+  float loop;
   while (ros::ok()) {
     my_player.move(loop++);
 
