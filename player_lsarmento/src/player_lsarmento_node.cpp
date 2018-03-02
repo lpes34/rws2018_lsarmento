@@ -115,7 +115,7 @@ public:
     q.setRPY(0, 0, alfa);
     T.setRotation(q);
     br.sendTransform(
-        tf::StampedTransform(T, ros::Time::now(), "world", "moliveira"));
+        tf::StampedTransform(T, ros::Time::now(), "world", "lsarmento"));
     ROS_INFO("Warping to x=%f y=%f a=%f", x, y, alfa);
   }
 
@@ -133,21 +133,32 @@ public:
     // ......................................
     // .............AI
     // ......................................
-
+    double displacement = 6;
+    double delta_alpha = M_PI;
     // ......................................
     // .............CONSTRAINS PART
     // ......................................
+    double displacement_max = msg->cheetah;
+    double displacement_with_constrains;
+    displacement > displacement_max ? displacement = displacement_max
+                                    : displacement = displacement;
 
-    double dist_max = msg->cheetah;
+    double delta_alpha_max = M_PI / 30;
+    fabs(delta_alpha) > fabs(delta_alpha_max)
+        ? delta_alpha = delta_alpha_max * delta_alpha / fabs(delta_alpha)
+        : delta_alpha = delta_alpha;
 
     static float loop = 0;
 
+    tf::Transform my_move_T; // declare the transformation object (player's pose
+                             // wrt world)
+    my_move_T.setOrigin(tf::Vector3(displacement, 0.0, 0.0));
+    tf::Quaternion q1;
+    q1.setRPY(0, 0, delta_alpha);
+    my_move_T.setRotation(q1);
     // T.setOrigin(tf::Vector3(5 * sin(loop++ / 20), 5 * cos(loop++ / 20),
     // 0.0));
-    T.setOrigin(tf::Vector3(x, y, 0.0));
-    tf::Quaternion q;
-    q.setRPY(0, 0, a - loop / 6);
-    T.setRotation(q);
+    T = T * my_move_T;
     br.sendTransform(
         tf::StampedTransform(T, ros::Time::now(), "world", "lsarmento"));
 
