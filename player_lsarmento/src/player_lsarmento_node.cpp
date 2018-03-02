@@ -5,6 +5,7 @@
 #include <rws2018_libs/team.h>
 #include <rws2018_msgs/MakeAPlay.h>
 #include <vector>
+#include <visualization_msgs/Marker.h>
 
 #include <tf/transform_broadcaster.h>
 // Boost includes
@@ -76,6 +77,11 @@ public:
   tf::Transform T; // declare the transformation object (player's pose wrt
                    // world)
 
+  boost::shared_ptr<ros::Publisher> vis_pub;
+
+  // ros::Publisher vis_pub =
+  //     n.advertise<visualization_msgs::Marker>("visualization_marker", 0);
+
   MyPlayer(std::string argin_name, std::string argin_team)
       : Player(argin_name) {
     red_team = boost::shared_ptr<Team>(new Team("red"));
@@ -99,6 +105,9 @@ public:
     }
     sub = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
     *sub = n.subscribe("/make_a_play", 100, &MyPlayer::move, this);
+
+    vis_pub = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
+    *vis_pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
 
     struct timeval t1;
     gettimeofday(&t1, NULL);
@@ -124,8 +133,29 @@ public:
              getTeamName().c_str());
   }
 
-  void move(const rws2018_msgs::MakeAPlay::ConstPtr &msg) {
+  void marker(void) {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "lsarmento";
+    marker.header.stamp = ros::Time();
+    marker.ns = "lsarmento";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::Marker::ADD;
 
+    marker.pose.orientation.w = 1.0;
+
+    marker.scale.z = 0.5;
+    marker.color.a = 1.0; // Don't forget to set the alpha!
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    marker.text = "hello, i'm alive";
+    marker.lifetime = ros::Duration(3);
+    vis_pub->publish(marker);
+  }
+
+  void move(const rws2018_msgs::MakeAPlay::ConstPtr &msg) {
+    marker();
     double x = T.getOrigin().x();
     double y = T.getOrigin().y();
     double a = 0;
