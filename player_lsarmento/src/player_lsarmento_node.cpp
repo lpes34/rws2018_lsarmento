@@ -152,6 +152,7 @@ public:
       ROS_ERROR("%s", ex.what());
       return NAN;
     }
+
     return atan2(t.getOrigin().y(), t.getOrigin().x());
   }
   double getDistanceToPlayer(string other_player,
@@ -207,30 +208,34 @@ public:
     // ......................................
     // .............AI
     // ......................................
+
     // Finding nearest prey
     double min_distance = 99999;
-    string player_to_hunt = "no player";
-    for (size_t i = 0; i < my_preys->player_names.size(); i++) {
-      double dist = getDistanceToPlayer(my_preys->player_names[i]);
+    string player_to_hunt = "no player"; /// falta alterar para caçar so so
+                                         /// vivos
+    for (size_t i = 0; i < msg->green_alive.size(); i++) {
+      double dist = getDistanceToPlayer(msg->green_alive[i]);
       if (isnan(dist)) {
       } else if (dist < min_distance) {
         min_distance = dist;
-        player_to_hunt = my_preys->player_names[i];
+        player_to_hunt = msg->green_alive[i];
       }
     }
     // finding nearest hunter
     double min_distance2 = 99999;
     string player_to_flee = "no player";
-    for (size_t i = 0; i < my_hunters->player_names.size(); i++) {
-      double dist = getDistanceToPlayer(my_hunters->player_names[i]);
+    for (size_t i = 0; i < msg->blue_alive.size(); i++) {
+      double dist = getDistanceToPlayer(msg->blue_alive[i]);
       if (isnan(dist)) {
       } else if (dist < min_distance2) {
         min_distance2 = dist;
-        player_to_flee = my_hunters->player_names[i];
+        player_to_flee = msg->blue_alive[i];
       }
     }
+
     double delta_alpha = 0;
     double displacement = 6;
+
     if (min_distance < min_distance2) {
 
       delta_alpha = getAngleToPlayer(player_to_hunt);
@@ -243,6 +248,15 @@ public:
         delta_alpha = 0;
       marker(player_to_flee, 2);
     }
+
+    // distance to center
+    double distance_center = sqrt(x * x + y * y);
+    if (distance_center > 7) {
+      // double ang_me_in_world = atan2(y, x);
+      delta_alpha = getAngleToPlayer("world");
+      ROS_INFO("getting to the edge");
+    }
+
     // ......................................
     // .............CONSTRAINS PART
     // ......................................
@@ -270,7 +284,7 @@ public:
     br.sendTransform(
         tf::StampedTransform(T, ros::Time::now(), "world", "lsarmento"));
 
-    ROS_INFO("My name is %s i like to move it move it", name.c_str());
+    // ROS_INFO("My name is %s i like to move it move it", name.c_str());
   }
 };
 }
