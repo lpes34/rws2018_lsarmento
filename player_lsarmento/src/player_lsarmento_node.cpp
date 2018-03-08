@@ -5,6 +5,7 @@
 #include <rws2018_libs/team.h>
 #include <rws2018_msgs/GameQuery.h>
 #include <rws2018_msgs/MakeAPlay.h>
+#include <sensor_msgs/PointCloud2.h>
 
 #include <vector>
 #include <visualization_msgs/Marker.h>
@@ -76,11 +77,13 @@ public:
   boost::shared_ptr<Team> my_team;
   boost::shared_ptr<Team> my_preys;
   boost::shared_ptr<Team> my_hunters;
+  string my_point_cloud_guess;
 
   tf::TransformBroadcaster br; // declare broadcaster
 
   ros::NodeHandle n;
   boost::shared_ptr<ros::Subscriber> sub;
+  boost::shared_ptr<ros::Subscriber> subpcl;
   tf::Transform T; // declare the transformation object (player's pose wrt
   // world)
 
@@ -98,6 +101,7 @@ public:
     red_team = boost::shared_ptr<Team>(new Team("red"));
     green_team = boost::shared_ptr<Team>(new Team("green"));
     blue_team = boost::shared_ptr<Team>(new Team("blue"));
+    my_point_cloud_guess = "banana";
     if (red_team->playerBelongsToTeam(name)) {
       my_team = red_team;
       my_preys = green_team;
@@ -117,6 +121,10 @@ public:
     sub = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
     *sub = n.subscribe("/make_a_play", 100, &MyPlayer::move, this);
 
+    subpcl = boost::shared_ptr<ros::Subscriber>(new ros::Subscriber());
+    *subpcl =
+        n.subscribe("/object_point_cloud", 100, &MyPlayer::detectShape, this);
+
     vis_pub = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
     *vis_pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
 
@@ -134,11 +142,16 @@ public:
     // warp(4, 3, M_PI / 2);
   }
 
+  void detectShape(const sensor_msgs::PointCloud2::ConstPtr &msg_pcl) {
+
+    my_point_cloud_guess = "banana";
+  }
+
   bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req,
                           rws2018_msgs::GameQuery::Response &res) {
     ROS_WARN("I am %s and I am responding to a service request!", name.c_str());
 
-    res.resposta = "banana";
+    res.resposta = my_point_cloud_guess;
     return true;
   }
   void warp(double x, double y, double alfa) {
