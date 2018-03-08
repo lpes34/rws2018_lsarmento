@@ -3,7 +3,9 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <rws2018_libs/team.h>
+#include <rws2018_msgs/GameQuery.h>
 #include <rws2018_msgs/MakeAPlay.h>
+
 #include <vector>
 #include <visualization_msgs/Marker.h>
 
@@ -86,6 +88,8 @@ public:
 
   boost::shared_ptr<ros::Publisher> vis_pub;
 
+  boost::shared_ptr<ros::ServiceServer> game_query_srv;
+
   // ros::Publisher vis_pub =
   //     n.advertise<visualization_msgs::Marker>("visualization_marker", 0);
 
@@ -116,6 +120,11 @@ public:
     vis_pub = boost::shared_ptr<ros::Publisher>(new ros::Publisher());
     *vis_pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
 
+    game_query_srv =
+        boost::shared_ptr<ros::ServiceServer>(new ros::ServiceServer());
+    *game_query_srv = n.advertiseService("/" + name + "/game_query",
+                                         &MyPlayer::respondToGameQuery, this);
+
     struct timeval t1;
     gettimeofday(&t1, NULL);
     srand(t1.tv_usec);
@@ -125,6 +134,13 @@ public:
     // warp(4, 3, M_PI / 2);
   }
 
+  bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req,
+                          rws2018_msgs::GameQuery::Response &res) {
+    ROS_WARN("I am %s and I am responding to a service request!", name.c_str());
+
+    res.resposta = "banana";
+    return true;
+  }
   void warp(double x, double y, double alfa) {
     T.setOrigin(tf::Vector3(x, y, 0.0));
     tf::Quaternion q;
@@ -254,7 +270,7 @@ public:
     if (distance_center > 7) {
       // double ang_me_in_world = atan2(y, x);
       delta_alpha = getAngleToPlayer("world");
-      ROS_INFO("getting to the edge");
+      // ROS_INFO("getting to the edge");
     }
 
     // ......................................
